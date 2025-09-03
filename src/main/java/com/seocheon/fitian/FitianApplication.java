@@ -22,8 +22,8 @@ public class FitianApplication {
 	@PostConstruct
 	void initFirebase() throws IOException {
 		try (var in = new FileInputStream(
-				"/home/ubuntu/serviceAccountKey.json"
-	            //"src/main/resources/serviceAccountKey.json"
+				//"/home/ubuntu/serviceAccountKey.json"
+	            "src/main/resources/serviceAccountKey.json"
 				)) {
 
 			FirebaseOptions opts = FirebaseOptions.builder()
