@@ -79,6 +79,16 @@ public class MemberController {
     public ResponseEntity<ApiResponse<MemberResponseDto>> updateMember(
     		@RequestBody RankUpdateRequest update,
     		@CurrentUser CustomUserDetails userDetails) {
+
+		//타겟 회원이 owner 일시 못바꿈
+		if(member.getRank().equals("owner")) {
+			return ResponseEntity.badRequest().body(ApiResponse.failure("바꿀 수 없는 회원입니다."));
+		}
+		
+		//본인과 다른 박스코드의 회원은 못바꿈
+		if(!member.getBoxCode().equals(userDetails.getMember().getBoxCode())) {
+			return ResponseEntity.badRequest().body(ApiResponse.failure("다른 박스의 회원 정보는 변경할 수 없습니다."));
+		}
 		
 		MemberModel member = memberService.findByUid(update.getUid());
 		String oldRank = member.getRank();
@@ -91,8 +101,13 @@ public class MemberController {
 				channelService.inviteParticipant(member.getBoxCode(), dto.getChannelId(), member.getUid(), userDetails.getUsername());
 			}
 			//notice인 채널에 전부 참여자로 추가
-			List<ChannelListResponseDto> channelListNotice = channelService.getChannelListByType(member.getBoxCode(), "notive");
+			List<ChannelListResponseDto> channelListNotice = channelService.getChannelListByType(member.getBoxCode(), "notice");
 			for(ChannelListResponseDto dto : channelListNotice) {
+				channelService.inviteParticipant(member.getBoxCode(), dto.getChannelId(), member.getUid(), userDetails.getUsername());
+			}
+			//general인 채널에 전부 참여자로 추가
+			List<ChannelListResponseDto> channelListGeneral = channelService.getChannelListByType(member.getBoxCode(), "general");
+			for(ChannelListResponseDto dto : channelListGeneral) {
 				channelService.inviteParticipant(member.getBoxCode(), dto.getChannelId(), member.getUid(), userDetails.getUsername());
 			}
 		} else if (newRank.equals("guest")) {
@@ -100,16 +115,6 @@ public class MemberController {
 			for(ChannelListResponseDto dto : channelList) {
 				channelService.deleteParticipant(member.getBoxCode(), dto.getChannelId(), member.getUid());
 			}
-		}
-		
-		//타겟 회원이 owner 일시 못바꿈
-		if(member.getRank().equals("owner")) {
-			return ResponseEntity.badRequest().body(ApiResponse.failure("바꿀 수 없는 회원입니다."));
-		}
-		
-		//본인과 다른 박스코드의 회원은 못바꿈
-		if(!member.getBoxCode().equals(userDetails.getMember().getBoxCode())) {
-			return ResponseEntity.badRequest().body(ApiResponse.failure("다른 박스의 회원 정보는 변경할 수 없습니다."));
 		}
 		
 		member.setRank(update.getRank());
